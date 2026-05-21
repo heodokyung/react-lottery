@@ -13,7 +13,61 @@ const previewText = (value) =>
   String(value || '')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 180);
+    .slice(0, 160);
+
+const readExistingData = () => {
+  if (!fs.existsSync(OUTPUT_PATH)) {
+    return {
+      latestRound: 0,
+      updatedAt: '',
+      source: 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}',
+      draws: [],
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf8'));
+    return {
+      latestRound: Number(parsed.latestRound || 0),
+      updatedAt: parsed.updatedAt || '',
+      source:
+        parsed.source ||
+        'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}',
+      draws: Array.isArray(parsed.draws) ? parsed.draws : [],
+    };
+  } catch (error) {
+    console.warn('기존 lotto-history.json을 읽지 못했습니다. 새 데이터로 다시 생성합니다.');
+    return {
+      latestRound: 0,
+      updatedAt: '',
+      source: 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}',
+      draws: [],
+    };
+  }
+};
+
+const writeData = ({ latestRound, draws, updatedAt = new Date().toISOString() }) => {
+  const normalizedDraws = [...draws]
+    .filter((draw) => Number(draw.drwNo) > 0)
+    .sort((a, b) => Number(a.drwNo) - Number(b.drwNo));
+
+  const nextLatestRound =
+    Number(latestRound) ||
+    (normalizedDraws.length ? Number(normalizedDraws[normalizedDraws.length - 1].drwNo) : 0);
+
+  const payload = {
+    latestRound: nextLatestRound,
+    updatedAt,
+    source: 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}',
+    draws: normalizedDraws,
+  };
+
+  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
+  fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+
+  console.log(`로또 데이터 저장 완료: ${OUTPUT_PATH}`);
+  console.log(`저장 회차 수: ${normalizedDraws.length}개 / 최신 회차: ${nextLatestRound || '없음'}`);
+};
 
 const estimateLatestRound = () => {
   const firstDrawTime = new Date(FIRST_DRAW_DATE_KST).getTime();
@@ -22,8 +76,8 @@ const estimateLatestRound = () => {
   return Math.max(1, Math.floor((now - firstDrawTime) / WEEK_MS) + 1);
 };
 
-const requestText = (url, retryCount = 2) =>
-  new Promise((resolve, reject) => {
+const requestText = (url, retryCount = 1) =>
+  new Promise((resolve) => {
     const request = https.get(
       url,
       {
@@ -37,7 +91,7 @@ const requestText = (url, retryCount = 2) =>
           'X-Requested-With': 'XMLHttpRequest',
           Connection: 'close',
         },
-        timeout: 12000,
+        timeout: 9000,
       },
       (response) => {
         const statusCode = response.statusCode || 0;
@@ -65,6 +119,7 @@ const requestText = (url, retryCount = 2) =>
           }
 
           resolve({
+            ok: true,
             statusCode,
             body,
           });
@@ -73,7 +128,13 @@ const requestText = (url, retryCount = 2) =>
     );
 
     request.on('timeout', () => {
-      request.destroy(new Error('요청 시간이 초과되었습니다.'));
+      request.destroy();
+      resolve({
+        ok: false,
+        statusCode: 0,
+        body: '',
+        reason: 'timeout',
+      });
     });
 
     request.on('error', async (error) => {
@@ -83,14 +144,29 @@ const requestText = (url, retryCount = 2) =>
         return;
       }
 
-      reject(error);
+      resolve({
+        ok: false,
+        statusCode: 0,
+        body: '',
+        reason: error.message || 'request-error',
+      });
     });
   });
 
 const requestLottoRound = async (round) => {
   const url = `https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${round}`;
-  const { statusCode, body } = await requestText(url);
+  const { ok, statusCode, body, reason } = await requestText(url);
   const trimmedBody = String(body || '').trim();
+
+  if (!ok) {
+    return {
+      returnValue: 'fail',
+      drwNo: round,
+      reason: reason || 'request-failed',
+      statusCode,
+      preview: '',
+    };
+  }
 
   if (!trimmedBody.startsWith('{')) {
     return {
@@ -115,31 +191,36 @@ const requestLottoRound = async (round) => {
   }
 };
 
-const findLatestRound = async () => {
-  // 날짜 계산은 추정치이므로 아직 공개되지 않은 회차를 포함할 수 있습니다.
-  // 그래서 예상 회차보다 조금 앞에서 시작한 뒤, 실제 success 응답이 나올 때까지 내려옵니다.
-  let round = estimateLatestRound() + 2;
+const findLatestRound = async (fallbackLatestRound) => {
+  const estimatedRound = estimateLatestRound();
+  let round = estimatedRound + 2;
 
-  while (round > 0) {
+  while (round > Math.max(0, estimatedRound - 12)) {
     const data = await requestLottoRound(round);
 
     if (data.returnValue === 'success') {
       return Number(data.drwNo || round);
     }
 
-    if (round >= estimateLatestRound() - 6) {
-      console.warn(
-        `${round}회차 확인 실패: ${data.reason || data.returnValue || 'unknown'}${
-          data.preview ? ` / ${data.preview}` : ''
-        }`
-      );
-    }
+    console.warn(
+      `${round}회차 확인 실패: ${data.reason || data.returnValue || 'unknown'}${
+        data.preview ? ` / ${data.preview}` : ''
+      }`
+    );
 
     round -= 1;
-    await sleep(150);
+    await sleep(180);
   }
 
-  throw new Error('최신 로또 회차를 찾지 못했습니다.');
+  if (fallbackLatestRound > 0) {
+    console.warn(
+      `최신 회차 자동 확인에 실패했습니다. 기존 데이터의 ${fallbackLatestRound}회차를 유지합니다.`
+    );
+    return fallbackLatestRound;
+  }
+
+  console.warn('최신 회차 자동 확인에 실패했습니다. 데이터 없이 앱 빌드를 계속 진행합니다.');
+  return 0;
 };
 
 const normalizeDraw = (data) => ({
@@ -157,59 +238,85 @@ const normalizeDraw = (data) => ({
   bnusNo: Number(data.bnusNo),
 });
 
-const fetchAllDraws = async (latestRound) => {
-  const draws = [];
+const fetchMissingDraws = async ({ latestRound, existingDraws }) => {
+  const drawMap = new Map(existingDraws.map((draw) => [Number(draw.drwNo), draw]));
+  const startRound = drawMap.size ? Math.max(...drawMap.keys()) + 1 : 1;
 
-  for (let round = 1; round <= latestRound; round += 1) {
+  if (!latestRound || startRound > latestRound) {
+    return [...drawMap.values()];
+  }
+
+  let consecutiveFailCount = 0;
+
+  for (let round = startRound; round <= latestRound; round += 1) {
     const data = await requestLottoRound(round);
 
     if (data.returnValue !== 'success') {
+      consecutiveFailCount += 1;
+
       console.warn(
         `${round}회차 데이터 건너뜀: ${data.reason || data.returnValue || 'unknown'}${
           data.preview ? ` / ${data.preview}` : ''
         }`
       );
+
+      // GitHub Actions 환경에서 동행복권 응답이 HTML/timeout으로 계속 막힐 수 있습니다.
+      // 연속 실패가 많아지면 배포를 실패시키지 않고 기존 데이터로 마무리합니다.
+      if (consecutiveFailCount >= 5) {
+        console.warn('연속 실패가 5회 발생해 데이터 갱신을 중단하고 기존 데이터로 배포를 계속합니다.');
+        break;
+      }
+
+      await sleep(250);
       continue;
     }
 
-    draws.push(normalizeDraw(data));
+    consecutiveFailCount = 0;
+    drawMap.set(Number(data.drwNo), normalizeDraw(data));
 
     if (round % 50 === 0 || round === latestRound) {
       console.log(`${round}/${latestRound}회차 수집 완료`);
     }
 
-    await sleep(80);
+    await sleep(120);
   }
 
-  return draws;
+  return [...drawMap.values()];
 };
 
 const main = async () => {
-  console.log('최신 로또 회차를 확인합니다.');
+  console.log('로또 데이터를 확인합니다.');
 
-  const latestRound = await findLatestRound();
-  console.log(`최신 회차: ${latestRound}`);
+  const existingData = readExistingData();
+  const fallbackLatestRound =
+    Number(existingData.latestRound) ||
+    (existingData.draws.length
+      ? Math.max(...existingData.draws.map((draw) => Number(draw.drwNo)))
+      : 0);
 
-  const draws = await fetchAllDraws(latestRound);
+  console.log(`기존 데이터 최신 회차: ${fallbackLatestRound || '없음'}`);
+
+  const latestRound = await findLatestRound(fallbackLatestRound);
+  const draws = await fetchMissingDraws({
+    latestRound,
+    existingDraws: existingData.draws,
+  });
 
   if (!draws.length) {
-    throw new Error('수집된 로또 데이터가 없습니다.');
+    console.warn('수집된 로또 데이터가 없습니다. 빈 데이터 파일로 앱 빌드를 계속합니다.');
   }
 
-  const payload = {
+  writeData({
     latestRound,
-    updatedAt: new Date().toISOString(),
-    source: 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}',
     draws,
-  };
-
-  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
-  fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-
-  console.log(`로또 데이터 저장 완료: ${OUTPUT_PATH}`);
+    updatedAt: draws.length ? new Date().toISOString() : existingData.updatedAt,
+  });
 };
 
 main().catch((error) => {
-  console.error(error);
-  process.exit(1);
+  console.warn('로또 데이터 갱신 중 예외가 발생했습니다. 배포를 중단하지 않습니다.');
+  console.warn(error);
+  const existingData = readExistingData();
+  writeData(existingData);
+  process.exit(0);
 });
