@@ -1,23 +1,69 @@
 import React from 'react';
 
-function AmountCommas(val) {
-  return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
+const formatAmount = (value) => {
+  if (value === undefined || value === null) return '-';
+  return Number(value).toLocaleString('ko-KR');
+};
+
+const getBallClassName = (number) => {
+  if (number <= 10) return 'yellow';
+  if (number <= 20) return 'blue';
+  if (number <= 30) return 'red';
+  if (number <= 40) return 'gray';
+  return 'green';
+};
+
+const getWinningNumbers = (lottyData) => [
+  lottyData.drwtNo1,
+  lottyData.drwtNo2,
+  lottyData.drwtNo3,
+  lottyData.drwtNo4,
+  lottyData.drwtNo5,
+  lottyData.drwtNo6,
+];
 
 const BollList = ({ lottyData }) => {
+  const winningNumbers = getWinningNumbers(lottyData);
+
   return (
-    <ul>
-      <li>회차정보: {lottyData.drwNo}</li>
-      <li>당첨날짜: {lottyData.drwNoDate}</li>
-      <li>전체 판매금: {AmountCommas(lottyData.totSellamnt)}</li>
-      <li>1등 당첨자 수: {lottyData.firstPrzwnerCo}명</li>
-      <li>1등 당첨금: {AmountCommas(lottyData.firstWinamnt)}</li>
-      <li>
-        당첨번호: {lottyData.drwtNo1}, {lottyData.drwtNo2}, {lottyData.drwtNo3},{' '}
-        {lottyData.drwtNo4}, {lottyData.drwtNo5}, {lottyData.drwtNo6} + 보너스
-        볼 :{lottyData.bnusNo}
-      </li>
-    </ul>
+    <section className="result-card" aria-label={`${lottyData.drwNo}회차 당첨 정보`}>
+      <div className="result-header">
+        <div>
+          <p>조회 결과</p>
+          <h3>{lottyData.drwNo}회차</h3>
+        </div>
+        <span>{lottyData.drwNoDate}</span>
+      </div>
+
+      <div className="winning-numbers">
+        {winningNumbers.map((number) => (
+          <span className={`lotto-ball ${getBallClassName(number)}`} key={number}>
+            {number}
+          </span>
+        ))}
+
+        <span className="bonus-divider">+</span>
+
+        <span className={`lotto-ball bonus ${getBallClassName(lottyData.bnusNo)}`}>
+          {lottyData.bnusNo}
+        </span>
+      </div>
+
+      <dl className="result-info">
+        <div>
+          <dt>전체 판매금</dt>
+          <dd>{formatAmount(lottyData.totSellamnt)}원</dd>
+        </div>
+        <div>
+          <dt>1등 당첨자</dt>
+          <dd>{formatAmount(lottyData.firstPrzwnerCo)}명</dd>
+        </div>
+        <div>
+          <dt>1등 당첨금</dt>
+          <dd>{formatAmount(lottyData.firstWinamnt)}원</dd>
+        </div>
+      </dl>
+    </section>
   );
 };
 

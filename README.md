@@ -1,30 +1,153 @@
-# React를 적용하여 Lotte 당첨 번호를 알아보는 Toy 프로젝트입니다.
+# React Lottery
 
-## 설명
-React의 기초와 React에서 State, Props 적용 등 기초지식을 학습하기 위해 진행했던 프로젝트로 가볍게 할 수 있는 프로젝트가 무엇일까 고민하다 우리 주변에서 가장 쉽게 접할 수 있는 로또(Lotte)번호 당첨 조회를 개발해보기로 정했습니다. 
+최신 로또 회차를 조회하고, 자동으로 로또 번호 6개를 생성하는 React 학습 프로젝트입니다.
 
-## 조건
-- Api 통신으로 데이터 값 가져오기(통신에 대한 방법은 자유)  
-- Component 분리하기  
-- Props, State 값 적용하기  
-- Scss를 적용하여 스타일링 클래스 모듈화(module)하기  
+처음에는 특정 회차를 직접 입력해 당첨번호를 조회하는 간단한 예제였고, 이번 정리에서는 아래 기능을 추가했습니다.
 
-### 동행복권 Api
-- 당첨번호 조회 : https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=회차정보
+- 최신 회차까지의 로또 당첨 정보 조회
+- 회차 입력 후 당첨번호, 보너스 번호, 1등 당첨 정보 확인
+- 중복 없는 로또 번호 6개 자동 생성
+- GitHub Pages 배포용 자동 데이터 수집 스크립트
+- GitHub Actions 기반 자동 빌드/배포
 
-### 느끼점
-- React의 기본 구조(데이터의 흐름)를 알아보는 좋은 계기가 되었습니다. 
-- 양방향의 데이터 흐름이 아닌 단반향의 데이터 흐름이기에 장,단점이 존재합니다.
+---
 
-### 문제점
-- 동행복권 Api는 공식적인 OpenApi가 아니기 때문에 해당 정보를 localhost에서 데이터를 조회하면 CORS ERROR가 발생합니다.  
+## 바로 보기
 
+GitHub Pages 배포 후 아래 주소에서 확인할 수 있습니다.
 
-### 해결방법
-위의 문제를 해결하기 위해 크롬브라우저에 속성값을 추가하는 방법으로 데이터를 조회했습니다.  
-Chrome의 바로가기에서 마우스 오른쪽 단추를 누르고, 대상 경로에 명령어를 추가해주면 됩니다.  
+```txt
+https://heodokyung.github.io/react-lottery/
+```
 
-속성값 추가 : --disable-web-security --disable-gpu --user-data-dir=~/tmp
+---
 
-위 방법외에도 다양한 CORS 해결방법이 있으니 다른 방법을 적용해보는것도 좋은 공부가 될 것 같습니다.  
-감사합니다.
+## 주요 기능
+
+### 회차별 당첨번호 조회
+
+`public/data/lotto-history.json`에 저장된 데이터를 기준으로 회차별 당첨번호를 조회합니다.
+
+브라우저에서 동행복권 API를 직접 호출하면 CORS 문제가 생길 수 있기 때문에, 배포 과정에서 미리 데이터를 수집하고 정적 JSON 파일로 저장하는 구조로 바꿨습니다.
+
+### 최신 회차 자동 반영
+
+`scripts/fetch-lotto-data.js`가 현재 날짜를 기준으로 최신 회차를 추정한 뒤, 실제 응답이 있는 마지막 회차를 찾아 데이터를 생성합니다.
+
+```bash
+npm run update:lotto
+```
+
+생성 위치:
+
+```txt
+public/data/lotto-history.json
+```
+
+### 자동 번호 생성
+
+1부터 45까지의 숫자 중 중복 없이 6개를 뽑아 오름차순으로 보여줍니다.
+
+이 기능은 학습과 재미를 위한 기능이며, 당첨을 보장하지 않습니다.
+
+---
+
+## 실행 방법
+
+의존성을 설치합니다.
+
+```bash
+npm install
+```
+
+로또 데이터를 생성합니다.
+
+```bash
+npm run update:lotto
+```
+
+개발 서버를 실행합니다.
+
+```bash
+npm start
+```
+
+---
+
+## 빌드
+
+```bash
+npm run build
+```
+
+GitHub Pages 하위 경로 배포를 위해 `package.json`에 아래 값을 사용합니다.
+
+```json
+"homepage": "/react-lottery/"
+```
+
+---
+
+## GitHub Pages 배포
+
+이 저장소는 GitHub Actions로 배포합니다.
+
+```txt
+Settings
+→ Pages
+→ Build and deployment
+→ Source: GitHub Actions
+```
+
+워크플로우 파일:
+
+```txt
+.github/workflows/deploy-pages.yml
+```
+
+배포 과정은 아래 순서로 진행됩니다.
+
+```txt
+npm install
+→ npm run update:lotto
+→ npm run build
+→ build 폴더를 GitHub Pages로 배포
+```
+
+워크플로우는 수동 실행도 가능하고, 매주 일요일 새벽에 자동 실행되도록 설정했습니다.
+
+---
+
+## 프로젝트 구조
+
+```txt
+react-lottery/
+├─ public/
+│  ├─ data/
+│  │  └─ lotto-history.json
+│  └─ index.html
+├─ scripts/
+│  └─ fetch-lotto-data.js
+├─ src/
+│  ├─ components/
+│  │  └─ BollList.js
+│  ├─ App.js
+│  ├─ App.css
+│  └─ index.css
+├─ .github/
+│  └─ workflows/
+│     └─ deploy-pages.yml
+└─ package.json
+```
+
+---
+
+## 참고
+
+로또 당첨번호 데이터는 동행복권의 회차별 JSON 응답을 기준으로 생성합니다.
+
+```txt
+https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=회차번호
+```
+
+이 엔드포인트는 브라우저에서 직접 호출할 때 CORS 문제가 발생할 수 있어, 정적 배포에서는 GitHub Actions에서 데이터를 미리 생성하는 방식이 더 안정적입니다.
