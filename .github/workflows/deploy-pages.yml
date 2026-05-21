@@ -29,7 +29,7 @@ jobs:
 
       # 이 저장소는 예전 CRA + yarn.lock 기반 프로젝트입니다.
       # package-lock.json이 package.json과 맞지 않아 npm ci가 실패하므로,
-      # 현재 남아 있는 yarn.lock을 기준으로 설치합니다.
+      # yarn.lock 기준으로 설치합니다.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -47,7 +47,6 @@ jobs:
       - name: Build
         env:
           CI: false
-          NODE_OPTIONS: --openssl-legacy-provider
         run: yarn build
 
       - name: Add nojekyll
