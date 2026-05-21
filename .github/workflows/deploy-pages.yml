@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
   workflow_dispatch:
   schedule:
     # 로또 추첨은 매주 토요일 밤에 진행되므로, 일요일 새벽에 데이터를 갱신합니다.
@@ -26,13 +27,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 이 프로젝트는 React 17 + react-scripts 4 기반의 오래된 CRA 프로젝트입니다.
+      # 최신 npm으로 npm install을 하면 일부 PostCSS 계열 의존성이 최신 버전으로 풀리면서
+      # ERR_PACKAGE_PATH_NOT_EXPORTED 오류가 발생할 수 있습니다.
+      # package-lock.json(v1) 기준으로 설치되도록 Node 16 + npm 6 조합을 사용합니다.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 16
 
       - name: Install dependencies
-        run: npm install
+        run: npx npm@6 ci
 
       - name: Update lotto data
         run: npm run update:lotto
