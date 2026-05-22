@@ -12,12 +12,7 @@
 ---
 
 ## 바로 보기
-
-GitHub Pages 배포 후 아래 주소에서 확인할 수 있습니다.
-
-```txt
-https://heodokyung.github.io/react-lottery/
-```
+[`react-lottery`](https://heodokyung.github.io/react-lottery/)
 
 ---
 
