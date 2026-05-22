@@ -1,35 +1,31 @@
 .lotto-app {
   min-height: 100vh;
-  padding: 48px 20px;
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.24), transparent 30rem),
-    radial-gradient(circle at bottom right, rgba(250, 204, 21, 0.22), transparent 26rem),
-    linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-  color: #172033;
+  padding: 40px 20px;
+  background: #f6f7f9;
+  color: #1f2933;
 }
 
 .hero-card,
 .panel {
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.1);
-  backdrop-filter: blur(14px);
+  border: 1px solid #e2e6ea;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(31, 41, 51, 0.06);
 }
 
 .hero-card {
-  width: min(100%, 1040px);
-  margin: 0 auto 22px;
-  padding: 42px;
+  width: min(100%, 1000px);
+  margin: 0 auto 18px;
+  padding: 32px;
 }
 
 .eyebrow,
 .section-heading p {
-  margin: 0 0 10px;
-  color: #2563eb;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
+  margin: 0 0 8px;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -37,179 +33,183 @@ h1,
 h2,
 h3 {
   margin: 0;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
 }
 
 h1 {
-  max-width: 760px;
-  font-size: clamp(34px, 6vw, 64px);
-  line-height: 1.05;
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.15;
 }
 
 .hero-description {
-  max-width: 660px;
-  margin: 18px 0 0;
-  color: #64748b;
-  font-size: 17px;
-  line-height: 1.7;
+  max-width: 640px;
+  margin: 14px 0 0;
+  color: #5f6b7a;
+  font-size: 16px;
+  line-height: 1.65;
 }
 
 .hero-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 26px;
+  gap: 8px;
+  margin-top: 22px;
 }
 
 .hero-meta span {
-  padding: 8px 12px;
+  padding: 7px 11px;
+  border: 1px solid #e2e6ea;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #3730a3;
+  background: #f9fafb;
+  color: #374151;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-  gap: 22px;
-  width: min(100%, 1040px);
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 18px;
+  width: min(100%, 1000px);
   margin: 0 auto;
 }
 
 .panel {
-  padding: 30px;
+  padding: 26px;
 }
 
 .section-heading {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .section-heading h2 {
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .search-box label {
   display: block;
   margin-bottom: 8px;
-  color: #475569;
+  color: #4b5563;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .search-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 10px;
+  gap: 8px;
 }
 
 input {
   min-width: 0;
-  height: 50px;
-  padding: 0 16px;
-  border: 1px solid #dbe3ef;
-  border-radius: 16px;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid #cfd6dd;
+  border-radius: 10px;
   background: #ffffff;
   color: #111827;
   font-size: 16px;
   outline: none;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 input:focus {
   border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 button {
-  min-height: 50px;
-  border: 0;
-  border-radius: 16px;
-  font-weight: 900;
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 800;
   cursor: pointer;
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    background 0.18s ease;
-}
-
-button:hover:not(:disabled) {
-  transform: translateY(-1px);
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .search-row button,
 .primary-button {
-  padding: 0 20px;
-  background: #2563eb;
+  padding: 0 18px;
+  background: #1f2937;
   color: #ffffff;
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
 }
 
 .search-row button:hover:not(:disabled),
 .primary-button:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #111827;
 }
 
 .sub-button {
   width: 100%;
   margin-top: 10px;
-  background: #eef2ff;
-  color: #3730a3;
+  border-color: #d1d5db;
+  background: #ffffff;
+  color: #374151;
+}
+
+.sub-button:hover:not(:disabled) {
+  background: #f3f4f6;
 }
 
 .notice {
   margin-top: 16px;
-  padding: 13px 15px;
-  border-radius: 16px;
-  background: #f8fafc;
-  color: #475569;
+  padding: 12px 14px;
+  border: 1px solid #e2e6ea;
+  border-radius: 12px;
+  background: #f9fafb;
+  color: #4b5563;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.55;
 }
 
 .notice.warning {
+  border-color: #fed7aa;
   background: #fff7ed;
-  color: #c2410c;
+  color: #9a3412;
 }
 
 .result-card {
-  margin-top: 22px;
-  padding: 20px;
-  border-radius: 22px;
-  background: #f8fafc;
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #e2e6ea;
+  border-radius: 16px;
+  background: #ffffff;
 }
 
 .result-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   margin-bottom: 18px;
 }
 
 .result-header p {
   margin: 0 0 4px;
-  color: #64748b;
+  color: #6b7280;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .result-header h3 {
-  font-size: 28px;
+  font-size: 26px;
 }
 
 .result-header span {
-  color: #475569;
+  color: #4b5563;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .winning-numbers,
@@ -217,40 +217,40 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
 }
 
 .generated-card {
   justify-content: center;
-  min-height: 112px;
-  margin: 20px 0;
-  padding: 20px;
-  border-radius: 24px;
-  background: #f8fafc;
+  min-height: 104px;
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f9fafb;
 }
 
 .lotto-ball {
   display: inline-grid;
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   place-items: center;
   border-radius: 50%;
   color: #ffffff;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 900;
-  box-shadow: inset 0 -5px 12px rgba(15, 23, 42, 0.18);
 }
 
 .lotto-ball.yellow {
-  background: #f59e0b;
+  background: #d97706;
 }
 
 .lotto-ball.blue {
-  background: #3b82f6;
+  background: #2563eb;
 }
 
 .lotto-ball.red {
-  background: #ef4444;
+  background: #dc2626;
 }
 
 .lotto-ball.gray {
@@ -258,22 +258,23 @@ button:disabled {
 }
 
 .lotto-ball.green {
-  background: #22c55e;
+  background: #16a34a;
 }
 
 .lotto-ball.bonus {
-  outline: 3px solid rgba(37, 99, 235, 0.16);
+  outline: 2px solid #d1d5db;
+  outline-offset: 2px;
 }
 
 .bonus-divider {
-  color: #94a3b8;
-  font-size: 22px;
+  color: #9ca3af;
+  font-size: 20px;
   font-weight: 900;
 }
 
 .result-info {
   display: grid;
-  gap: 10px;
+  gap: 0;
   margin: 18px 0 0;
 }
 
@@ -282,25 +283,25 @@ button:disabled {
   justify-content: space-between;
   gap: 14px;
   padding: 12px 0;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e5e7eb;
 }
 
 .result-info dt {
-  color: #64748b;
-  font-weight: 800;
+  color: #6b7280;
+  font-weight: 700;
 }
 
 .result-info dd {
   margin: 0;
   color: #111827;
-  font-weight: 900;
+  font-weight: 800;
   text-align: right;
 }
 
 .guide-text {
   margin: 0;
-  color: #64748b;
-  line-height: 1.7;
+  color: #5f6b7a;
+  line-height: 1.65;
 }
 
 .primary-button {
@@ -311,9 +312,10 @@ button:disabled {
   display: grid;
   gap: 4px;
   margin-top: 16px;
-  padding: 16px;
-  border-radius: 18px;
-  background: #f8fafc;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
 }
 
 .latest-summary strong {
@@ -321,7 +323,7 @@ button:disabled {
 }
 
 .latest-summary span {
-  color: #64748b;
+  color: #6b7280;
   font-size: 14px;
 }
 
@@ -332,11 +334,11 @@ button:disabled {
 
   .hero-card,
   .panel {
-    border-radius: 24px;
+    border-radius: 16px;
   }
 
   .hero-card {
-    padding: 28px;
+    padding: 26px;
   }
 
   .content-grid {
@@ -347,7 +349,7 @@ button:disabled {
 @media (max-width: 520px) {
   .hero-card,
   .panel {
-    padding: 22px;
+    padding: 20px;
   }
 
   .search-row {

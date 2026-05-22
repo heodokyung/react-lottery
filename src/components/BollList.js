@@ -1,8 +1,15 @@
 import React from 'react';
 
-const formatAmount = (value) => {
-  if (value === undefined || value === null) return '-';
-  return Number(value).toLocaleString('ko-KR');
+const hasPositiveNumber = (value) => Number.isFinite(Number(value)) && Number(value) > 0;
+
+const formatCurrency = (value) => {
+  if (!hasPositiveNumber(value)) return '-';
+  return `${Number(value).toLocaleString('ko-KR')}원`;
+};
+
+const formatCount = (value) => {
+  if (!hasPositiveNumber(value)) return '-';
+  return `${Number(value).toLocaleString('ko-KR')}명`;
 };
 
 const getBallClassName = (number) => {
@@ -52,15 +59,15 @@ const BollList = ({ lottyData }) => {
       <dl className="result-info">
         <div>
           <dt>전체 판매금</dt>
-          <dd>{formatAmount(lottyData.totSellamnt)}원</dd>
+          <dd>{formatCurrency(lottyData.totSellamnt)}</dd>
         </div>
         <div>
           <dt>1등 당첨자</dt>
-          <dd>{formatAmount(lottyData.firstPrzwnerCo)}명</dd>
+          <dd>{formatCount(lottyData.firstPrzwnerCo)}</dd>
         </div>
         <div>
           <dt>1등 당첨금</dt>
-          <dd>{formatAmount(lottyData.firstWinamnt)}원</dd>
+          <dd>{formatCurrency(lottyData.firstWinamnt)}</dd>
         </div>
       </dl>
     </section>

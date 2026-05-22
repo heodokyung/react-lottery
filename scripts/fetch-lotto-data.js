@@ -6,6 +6,23 @@ const FIRST_DRAW_DATE_KST = '2002-12-07T20:45:00+09:00';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 const OUTPUT_PATH = path.resolve(__dirname, '../public/data/lotto-history.json');
+const SEED_DRAWS = [
+  {
+    drwNo: 1224,
+    drwNoDate: '2026-05-16',
+    totSellamnt: 0,
+    firstWinamnt: 2414855250,
+    firstPrzwnerCo: 12,
+    drwtNo1: 9,
+    drwtNo2: 18,
+    drwtNo3: 21,
+    drwtNo4: 27,
+    drwtNo5: 44,
+    drwtNo6: 45,
+    bnusNo: 28,
+  },
+];
+
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -15,13 +32,24 @@ const previewText = (value) =>
     .trim()
     .slice(0, 160);
 
+const mergeSeedDraws = (draws = []) => {
+  const drawMap = new Map();
+
+  [...SEED_DRAWS, ...draws].forEach((draw) => {
+    const round = Number(draw && draw.drwNo);
+    if (round > 0) drawMap.set(round, draw);
+  });
+
+  return [...drawMap.values()].sort((a, b) => Number(a.drwNo) - Number(b.drwNo));
+};
+
 const readExistingData = () => {
   if (!fs.existsSync(OUTPUT_PATH)) {
     return {
       latestRound: 0,
       updatedAt: '',
       source: 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}',
-      draws: [],
+      draws: mergeSeedDraws([]),
     };
   }
 
@@ -33,7 +61,7 @@ const readExistingData = () => {
       source:
         parsed.source ||
         'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}',
-      draws: Array.isArray(parsed.draws) ? parsed.draws : [],
+      draws: mergeSeedDraws(Array.isArray(parsed.draws) ? parsed.draws : []),
     };
   } catch (error) {
     console.warn('기존 lotto-history.json을 읽지 못했습니다. 새 데이터로 다시 생성합니다.');
@@ -41,15 +69,13 @@ const readExistingData = () => {
       latestRound: 0,
       updatedAt: '',
       source: 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}',
-      draws: [],
+      draws: mergeSeedDraws([]),
     };
   }
 };
 
 const writeData = ({ latestRound, draws, updatedAt = new Date().toISOString() }) => {
-  const normalizedDraws = [...draws]
-    .filter((draw) => Number(draw.drwNo) > 0)
-    .sort((a, b) => Number(a.drwNo) - Number(b.drwNo));
+  const normalizedDraws = mergeSeedDraws(draws);
 
   const nextLatestRound =
     Number(latestRound) ||
@@ -76,6 +102,31 @@ const estimateLatestRound = () => {
   return Math.max(1, Math.floor((now - firstDrawTime) / WEEK_MS) + 1);
 };
 
+const extractLatestRoundFromHtml = (html) => {
+  const rounds = [...String(html || '').matchAll(/(\d{3,4})회/g)]
+    .map((match) => Number(match[1]))
+    .filter((round) => round > 0);
+
+  return rounds.length ? Math.max(...rounds) : 0;
+};
+
+const findLatestRoundFromResultPage = async () => {
+  const url = 'https://www.dhlottery.co.kr/lt645/result';
+  const { ok, statusCode, body, reason } = await requestText(url);
+
+  if (!ok) {
+    console.warn(`동행복권 결과 페이지 확인 실패: ${reason || statusCode || 'unknown'}`);
+    return 0;
+  }
+
+  const latestRound = extractLatestRoundFromHtml(body);
+  if (latestRound > 0) {
+    console.log(`동행복권 결과 페이지 기준 최신 회차: ${latestRound}회`);
+  }
+
+  return latestRound;
+};
+
 const requestText = (url, retryCount = 1) =>
   new Promise((resolve) => {
     const request = https.get(
@@ -91,7 +142,7 @@ const requestText = (url, retryCount = 1) =>
           'X-Requested-With': 'XMLHttpRequest',
           Connection: 'close',
         },
-        timeout: 9000,
+        timeout: 5000,
       },
       (response) => {
         const statusCode = response.statusCode || 0;
@@ -195,7 +246,7 @@ const findLatestRound = async (fallbackLatestRound) => {
   const estimatedRound = estimateLatestRound();
   let round = estimatedRound + 2;
 
-  while (round > Math.max(0, estimatedRound - 12)) {
+  while (round > Math.max(0, estimatedRound - 4)) {
     const data = await requestLottoRound(round);
 
     if (data.returnValue === 'success') {
@@ -212,6 +263,11 @@ const findLatestRound = async (fallbackLatestRound) => {
     await sleep(180);
   }
 
+  const pageLatestRound = await findLatestRoundFromResultPage();
+  if (pageLatestRound > 0) {
+    return pageLatestRound;
+  }
+
   if (fallbackLatestRound > 0) {
     console.warn(
       `최신 회차 자동 확인에 실패했습니다. 기존 데이터의 ${fallbackLatestRound}회차를 유지합니다.`
@@ -219,8 +275,9 @@ const findLatestRound = async (fallbackLatestRound) => {
     return fallbackLatestRound;
   }
 
-  console.warn('최신 회차 자동 확인에 실패했습니다. 데이터 없이 앱 빌드를 계속 진행합니다.');
-  return 0;
+  const seedLatestRound = Math.max(...SEED_DRAWS.map((draw) => Number(draw.drwNo)));
+  console.warn(`최신 회차 자동 확인에 실패했습니다. 내장 기준 데이터의 ${seedLatestRound}회차를 사용합니다.`);
+  return seedLatestRound;
 };
 
 const normalizeDraw = (data) => ({
@@ -240,7 +297,10 @@ const normalizeDraw = (data) => ({
 
 const fetchMissingDraws = async ({ latestRound, existingDraws }) => {
   const drawMap = new Map(existingDraws.map((draw) => [Number(draw.drwNo), draw]));
-  const startRound = drawMap.size ? Math.max(...drawMap.keys()) + 1 : 1;
+  const existingRounds = [...drawMap.keys()];
+  const maxExistingRound = existingRounds.length ? Math.max(...existingRounds) : 0;
+  const hasOnlySeedData = existingRounds.length <= SEED_DRAWS.length;
+  const startRound = hasOnlySeedData ? 1 : maxExistingRound + 1;
 
   if (!latestRound || startRound > latestRound) {
     return [...drawMap.values()];
